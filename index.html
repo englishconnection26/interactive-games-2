@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 44 Mystery Box</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: linear-gradient(180deg, #5C94FC 0%, #4A7DE4 100%);
+  min-height: 100vh;
+  overflow-x: hidden;
+  color: #333;
+}
+
+/* BACKGROUND */
+.clouds { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+.cloud { position:absolute; background:#fff; border-radius:100px; opacity:0.8; }
+.cloud::before { content:''; position:absolute; background:#fff; border-radius:100px; }
+.cloud1 { width:120px; height:40px; top:15%; left:10%; }
+.cloud1::before { width:60px; height:60px; top:-30px; left:20px; }
+.cloud2 { width:100px; height:35px; top:25%; left:70%; }
+.cloud2::before { width:50px; height:50px; top:-25px; left:15px; }
+.cloud3 { width:140px; height:45px; top:10%; left:50%; }
+.cloud3::before { width:70px; height:70px; top:-35px; left:30px; }
+.cloud4 { width:90px; height:30px; top:35%; left:25%; }
+.cloud4::before { width:45px; height:45px; top:-20px; left:10px; }
+.ground {
+  position:fixed; bottom:0; left:0; width:100%; height:70px;
+  background:linear-gradient(180deg,#6B8C42 0%,#5A7A35 50%,#8B6914 50%,#7A5A10 100%);
+  z-index:1; border-top:4px solid #4A6B2F;
+}
+.ground-pattern {
+  position:absolute; top:50%; left:0; width:100%; height:50%;
+  background-image:repeating-linear-gradient(90deg,transparent,transparent 20px,rgba(0,0,0,0.1) 20px,rgba(0,0,0,0.1) 22px);
+}
+
+/* SOUND BUTTON */
+#soundToggle {
+  position:fixed; top:15px; right:15px; z-index:9999;
+  background:rgba(255,255,255,0.95); border:3px solid #FFD700; border-radius:50%;
+  width:48px; height:48px; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:1.3rem; box-shadow:0 3px 10px rgba(0,0,0,0.2);
+  transition:transform 0.2s; user-select:none;
+}
+#soundToggle:hover { transform:scale(1.1); }
+
+/* MAIN CONTAINER */
+#app { position:relative; z-index:10; max-width:1100px; margin:0 auto; padding:20px 20px 100px; }
+
+/* SETUP SCREEN */
+#setupScreen {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:90vh; animation:fadeIn 0.5s ease;
+}
+.setup-title {
+  font-family:'Fredoka One',cursive; font-size:3.5rem; color:#FFD700;
+  text-shadow:4px 4px 0 #E6B800, 6px 6px 0 rgba(0,0,0,0.3);
+  margin-bottom:6px; text-align:center;
+}
+.setup-subtitle {
+  font-family:'Fredoka One',cursive; font-size:1.8rem; color:#fff;
+  text-shadow:2px 2px 0 rgba(0,0,0,0.3); margin-bottom:28px;
+}
+.setup-box {
+  background:rgba(255,255,255,0.97); border-radius:20px; padding:36px;
+  box-shadow:0 10px 40px rgba(0,0,0,0.3); max-width:560px; width:100%;
+  border:4px solid #FFD700;
+}
+.setup-section { margin-bottom:22px; }
+.setup-section label { display:block; font-weight:900; font-size:1.05rem; color:#E52521; margin-bottom:8px; }
+.setup-section input[type="number"],
+.setup-section input[type="text"] {
+  width:100%; padding:11px 14px; border:3px solid #FFD700; border-radius:10px;
+  font-size:1rem; font-family:'Nunito',sans-serif; transition:border-color 0.2s;
+}
+.setup-section input:focus { outline:none; border-color:#E52521; }
+.team-inputs { display:grid; gap:8px; }
+.team-input-row { display:flex; align-items:center; gap:10px; }
+.team-color-dot { width:24px; height:24px; border-radius:50%; flex-shrink:0; border:2px solid #333; }
+.slider-row { display:flex; align-items:center; gap:12px; }
+#timerSlider {
+  flex:1; -webkit-appearance:none; height:10px; border-radius:5px;
+  background:#ddd; outline:none; cursor:pointer;
+}
+#timerSlider::-webkit-slider-thumb {
+  -webkit-appearance:none; width:26px; height:26px; border-radius:50%;
+  background:#E52521; cursor:pointer; border:3px solid #FFD700;
+}
+#timerSlider::-moz-range-thumb {
+  width:26px; height:26px; border-radius:50%;
+  background:#E52521; cursor:pointer; border:3px solid #FFD700;
+}
+.timer-badge {
+  background:#FFD700; color:#333; padding:5px 14px;
+  border-radius:20px; font-weight:900; font-size:1rem; white-space:nowrap;
+}
+
+/* BUTTONS */
+.btn {
+  font-family:'Fredoka One',cursive; font-size:1.2rem; padding:14px 36px;
+  border:none; border-radius:50px; cursor:pointer; transition:transform 0.15s, box-shadow 0.15s;
+  text-transform:uppercase; letter-spacing:1px; display:inline-block;
+}
+.btn:hover { transform:translateY(-3px); }
+.btn:active { transform:translateY(1px); }
+.btn-red   { background:linear-gradient(180deg,#E52521,#C41E1A); color:#fff; box-shadow:0 5px 0 #9A1815; }
+.btn-green { background:linear-gradient(180deg,#43B047,#369639); color:#fff; box-shadow:0 5px 0 #2A782D; }
+.btn-yellow{ background:linear-gradient(180deg,#FFD700,#E6B800); color:#333; box-shadow:0 5px 0 #C49400; }
+.btn-blue  { background:linear-gradient(180deg,#5C94FC,#4A7DE4); color:#fff; box-shadow:0 5px 0 #3A5FB0; }
+.btn-center{ display:block; margin:20px auto 0; }
+
+/* GAME SCREEN */
+#gameScreen { display:none; animation:fadeIn 0.5s ease; }
+
+.game-header {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:18px; flex-wrap:wrap; gap:12px;
+}
+.game-title {
+  font-family:'Fredoka One',cursive; font-size:2rem; color:#FFD700;
+  text-shadow:3px 3px 0 #E6B800, 4px 4px 0 rgba(0,0,0,0.3);
+}
+.turn-indicator {
+  background:rgba(255,255,255,0.97); padding:10px 22px; border-radius:30px;
+  font-weight:900; font-size:1.05rem; border:3px solid #FFD700;
+  animation:pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+
+.scoreboard { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-bottom:18px; }
+.score-card {
+  background:rgba(255,255,255,0.97); border-radius:14px; padding:12px 22px;
+  text-align:center; border:3px solid; min-width:130px; transition:transform 0.3s;
+}
+.score-card.active { transform:scale(1.1); box-shadow:0 0 20px rgba(255,215,0,0.5); }
+.score-card h3 { font-size:0.85rem; margin-bottom:4px; text-transform:uppercase; }
+.score-card .pts { font-family:'Fredoka One',cursive; font-size:1.8rem; }
+
+/* BOX GRID */
+.box-grid {
+  display:grid; grid-template-columns:repeat(7,1fr); gap:12px;
+  margin:0 auto 28px; max-width:880px;
+}
+@media(max-width:700px){ .box-grid{ grid-template-columns:repeat(4,1fr); } }
+@media(max-width:420px){ .box-grid{ grid-template-columns:repeat(3,1fr); } }
+@media(max-width:600px){
+  .answer-grid { grid-template-columns:1fr; }
+  .question-text { font-size:1.3rem; }
+  .answer-btn { font-size:1.15rem; }
+  .team-select-btn { font-size:1.1rem; }
+}
+
+.game-box {
+  aspect-ratio:1; background:linear-gradient(135deg,#FFD700 0%,#FFC800 50%,#E6B800 100%);
+  border-radius:12px; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; border:3px solid #E6A800;
+  box-shadow:0 6px 0 #C49400, 0 8px 15px rgba(0,0,0,0.3);
+  transition:transform 0.18s, box-shadow 0.18s;
+  font-family:'Fredoka One',cursive; font-size:1.5rem; color:#fff;
+  text-shadow:2px 2px 0 rgba(0,0,0,0.3); position:relative; user-select:none;
+}
+.game-box::before {
+  content:'?'; position:absolute; font-family:'Fredoka One',cursive;
+  font-size:2.2rem; color:rgba(255,255,255,0.25); pointer-events:none;
+}
+.game-box:not(.opened):hover { transform:translateY(-5px) rotate(3deg); box-shadow:0 10px 0 #C49400, 0 14px 25px rgba(0,0,0,0.3); }
+.game-box:not(.opened):active { transform:translateY(1px); box-shadow:0 3px 0 #C49400; }
+.game-box.opened {
+  background:linear-gradient(135deg,#999,#777); border-color:#555;
+  box-shadow:0 3px 0 #444; cursor:default; opacity:0.55;
+}
+.box-num {
+  font-size:1.4rem; font-family:'Fredoka One',cursive; font-weight:900;
+  color:#fff; text-shadow:2px 2px 0 rgba(0,0,0,0.3);
+  line-height:1; position:relative; z-index:1;
+}
+.game-box.opened .box-num { color:rgba(255,255,255,0.6); font-size:1.6rem; }
+@keyframes boxBounce {
+  0%{transform:scale(1) rotate(0)} 25%{transform:scale(1.2) rotate(-5deg)}
+  50%{transform:scale(0.9) rotate(5deg)} 75%{transform:scale(1.1) rotate(-3deg)}
+  100%{transform:scale(1) rotate(0)}
+}
+.box-bouncing { animation:boxBounce 0.5s ease; }
+.game-footer { text-align:center; margin-top:10px; }
+
+/* OVERLAY */
+.overlay {
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.72); display:none;
+  align-items:center; justify-content:center; z-index:1000; padding:20px;
+}
+.overlay.show { display:flex; animation:fadeIn 0.25s ease; }
+
+.modal {
+  background:#fff; border-radius:20px; padding:36px; max-width:480px; width:100%;
+  border:5px solid #FFD700; box-shadow:0 20px 60px rgba(0,0,0,0.4);
+  animation:slideUp 0.35s ease;
+}
+@keyframes slideUp { from{transform:translateY(40px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+/* STEP 1 — Timer + Team Select */
+.modal.step1 { text-align:center; max-height:92vh; overflow-y:auto; }
+.step1-box-label {
+  font-family:'Fredoka One',cursive; font-size:2.2rem; color:#E52521; margin-bottom:4px;
+}
+.step1-subtitle { font-size:1.15rem; color:#666; font-weight:700; margin-bottom:20px; }
+
+.big-timer-wrap { display:flex; align-items:center; justify-content:center; margin-bottom:22px; }
+.big-timer {
+  font-family:'Fredoka One',cursive; font-size:4rem; color:#E52521;
+  background:#FFF8DC; border:4px solid #FFD700; border-radius:20px;
+  padding:10px 32px; min-width:140px; text-align:center;
+  box-shadow:0 4px 0 #C49400;
+}
+.big-timer.urgent { animation:bigBlink 0.5s infinite; background:#E52521; color:#fff; border-color:#9A1815; }
+@keyframes bigBlink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+/* Timer control buttons */
+.timer-controls {
+  display:flex; justify-content:center; gap:10px; margin-bottom:20px;
+}
+.tcbtn {
+  width:44px; height:44px; border-radius:50%; border:3px solid; cursor:pointer;
+  font-size:1rem; display:flex; align-items:center; justify-content:center;
+  transition:transform 0.15s, opacity 0.2s; font-family:'Fredoka One',cursive;
+}
+.tcbtn:hover:not(:disabled) { transform:scale(1.15); }
+.tcbtn:disabled { opacity:0.3; cursor:default; }
+.tcbtn-start { background:linear-gradient(180deg,#43B047,#369639); color:#fff; border-color:#2A782D; box-shadow:0 3px 0 #2A782D; }
+.tcbtn-pause { background:linear-gradient(180deg,#FFD700,#E6B800); color:#333; border-color:#C49400; box-shadow:0 3px 0 #C49400; }
+.tcbtn-stop  { background:linear-gradient(180deg,#E52521,#C41E1A); color:#fff; border-color:#9A1815; box-shadow:0 3px 0 #9A1815; }
+
+.team-select-label { font-weight:900; font-size:1.2rem; color:#333; margin-bottom:12px; }
+.team-select-grid { display:grid; gap:10px; }
+#teamSelectSection { margin-top:20px; transition:opacity 0.25s; }
+#teamSelectSection.locked { opacity:0.35; pointer-events:none; filter:grayscale(60%); }
+.team-select-btn {
+  box-sizing:border-box; width:100%; padding:16px 22px; border:3px solid; border-radius:14px; cursor:pointer;
+  background:#fff; font-size:1.3rem; font-weight:900; font-family:'Nunito',sans-serif;
+  transition:transform 0.15s, background 0.2s; display:flex; align-items:center; gap:10px;
+}
+.team-select-btn:hover { transform:scale(1.03); }
+.team-select-btn.selected { color:#fff !important; transform:scale(1.05); box-shadow:0 4px 12px rgba(0,0,0,0.25); }
+.team-dot { width:18px; height:18px; border-radius:50%; border:2px solid rgba(0,0,0,0.15); flex-shrink:0; }
+.confirm-btn-wrap { margin-top:18px; }
+
+/* STEP 2 — Keep / Give */
+.modal.centred { text-align:center; }
+.modal.centred .modal-title { font-size:1.8rem; display:block; margin-bottom:12px; }
+.modal-title { font-family:'Fredoka One',cursive; font-size:1.4rem; color:#E52521; }
+.chance-desc { font-size:1.05rem; font-weight:700; margin-bottom:6px; }
+.chance-sub  { font-size:0.92rem; color:#666; margin-bottom:18px; }
+.give-section { margin-top:18px; }
+.give-section h4 { font-weight:900; font-size:1rem; margin-bottom:12px; }
+.team-buttons { display:grid; gap:8px; }
+.team-pick-btn {
+  padding:13px; border:3px solid; border-radius:12px; cursor:pointer; background:#fff;
+  font-size:1.05rem; font-weight:900; transition:transform 0.15s;
+  font-family:'Nunito',sans-serif;
+}
+.team-pick-btn:hover { transform:scale(1.04); }
+
+/* STEP 1.5 — QUESTION */
+.modal { box-sizing:border-box; }
+.question-text {
+  font-size:1.55rem; font-weight:900; color:#333; margin:16px 0 22px; line-height:1.45;
+  word-wrap:break-word; overflow-wrap:break-word;
+}
+.answer-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.answer-btn {
+  box-sizing:border-box; width:100%; padding:18px 14px; border:3px solid #FFD700; border-radius:12px; background:#fff;
+  font-size:1.32rem; font-weight:900; font-family:'Nunito',sans-serif; cursor:pointer;
+  word-wrap:break-word; overflow-wrap:break-word; white-space:normal; line-height:1.3;
+  transition:transform 0.15s, background 0.2s, border-color 0.2s, color 0.2s;
+}
+.answer-btn:hover:not(:disabled) { transform:scale(1.04); }
+.answer-btn:disabled { cursor:default; opacity:0.55; }
+.answer-btn.correct-flash {
+  background:#43B047 !important; border-color:#2A782D !important; color:#fff !important;
+  animation:flashPulse 0.45s ease 2;
+}
+.answer-btn.wrong-flash {
+  background:#E52521 !important; border-color:#9A1815 !important; color:#fff !important;
+  animation:shakeBtn 0.4s ease;
+}
+@keyframes flashPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.09)} }
+@keyframes shakeBtn { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+/* RESULT */
+#resultOverlay {
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  background:rgba(0,0,0,0.78); display:none;
+  align-items:center; justify-content:center; z-index:2000; flex-direction:column;
+}
+#resultOverlay.show { display:flex; animation:fadeIn 0.3s ease; }
+.result-coins { position:absolute; width:100%; height:100%; overflow:hidden; pointer-events:none; }
+.coin {
+  position:absolute; width:48px; height:48px;
+  background:linear-gradient(180deg,#FFD700,#FFA500); border-radius:50%;
+  border:3px solid #E6A800; display:flex; align-items:center; justify-content:center;
+  font-family:'Fredoka One',cursive; font-size:1.1rem; color:#E6A800;
+  animation:coinFall 2s ease-in forwards;
+}
+@keyframes coinFall { 0%{transform:translateY(-100px) rotate(0);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+.result-box {
+  background:#fff; border-radius:24px; padding:44px 50px; text-align:center;
+  border:5px solid; box-shadow:0 20px 60px rgba(0,0,0,0.4); z-index:10;
+  animation:bounceIn 0.45s ease; max-width:440px; width:90%;
+}
+@keyframes bounceIn { 0%{transform:scale(0.3);opacity:0} 55%{transform:scale(1.06)} 75%{transform:scale(0.94)} 100%{transform:scale(1);opacity:1} }
+.result-title  { font-family:'Fredoka One',cursive; font-size:2.4rem; margin-bottom:12px; }
+.result-points { font-family:'Fredoka One',cursive; font-size:2.8rem; margin-bottom:14px; }
+.result-msg    { font-size:1.1rem; font-weight:700; }
+
+/* GAME OVER */
+#gameOver {
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  background:linear-gradient(180deg,#5C94FC,#4A7DE4); display:none;
+  align-items:center; justify-content:center; flex-direction:column;
+  z-index:3000; text-align:center; padding:20px;
+}
+#gameOver.show { display:flex; animation:fadeIn 0.5s ease; }
+.trophy { font-size:6rem; margin-bottom:18px; animation:trophyBounce 1s ease infinite; }
+@keyframes trophyBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+.winner-name {
+  font-family:'Fredoka One',cursive; font-size:3rem; color:#FFD700;
+  text-shadow:3px 3px 0 #E6B800, 5px 5px 0 rgba(0,0,0,0.3); margin-bottom:8px;
+}
+.congrats { color:#FFD700; font-size:1.4rem; font-weight:900; text-shadow:2px 2px 0 rgba(0,0,0,0.3); }
+.final-scores { display:flex; gap:16px; margin:26px 0; flex-wrap:wrap; justify-content:center; }
+.final-card { background:rgba(255,255,255,0.97); border-radius:14px; padding:18px 26px; text-align:center; border:4px solid; }
+.final-card.winner { transform:scale(1.15); box-shadow:0 0 30px rgba(255,215,0,0.6); }
+.final-card .medal { font-size:2rem; margin-bottom:4px; }
+.final-card .fname { font-weight:900; }
+.final-card .fscore { font-family:'Fredoka One',cursive; font-size:1.5rem; }
+
+/* MISC */
+.points-popup {
+  position:fixed; font-family:'Fredoka One',cursive; font-size:2rem;
+  z-index:500; pointer-events:none; animation:ptFloat 1.5s ease forwards;
+}
+@keyframes ptFloat { 0%{transform:translateX(-50%) translateY(0) scale(0.5);opacity:0} 20%{transform:translateX(-50%) translateY(-20px) scale(1.2);opacity:1} 100%{transform:translateX(-50%) translateY(-100px) scale(1);opacity:0} }
+.confetti-piece { position:fixed; width:10px; height:10px; top:-10px; z-index:2999; animation:confettiFall 3s linear forwards; }
+@keyframes confettiFall { 0%{transform:translateY(0) rotate(0);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.hidden { display:none !important; }
+
+/* ===== LESSON 44 ADDITIONS ===== */
+.box-grid { grid-template-columns:repeat(10,1fr); max-width:820px; gap:8px; margin-bottom:18px; }
+@media(max-width:900px){ .box-grid{ grid-template-columns:repeat(6,1fr); } }
+@media(max-width:480px){ .box-grid{ grid-template-columns:repeat(4,1fr); } }
+.game-box.opened.claimed { opacity:1; flex-direction:column; gap:2px; padding:4px; text-align:center; }
+.game-box.opened.claimed::before { content:''; }
+.claim-emoji { font-size:1.5rem; line-height:1; }
+.claim-label { font-family:'Nunito',sans-serif; font-weight:900; font-size:0.72rem; color:#fff; text-shadow:1px 1px 0 rgba(0,0,0,0.35); line-height:1.1; }
+
+/* Activity picker */
+#pickerScreen { display:none; animation:fadeIn 0.5s ease; }
+.picker-title { font-family:'Fredoka One',cursive; font-size:2.4rem; color:#FFD700; text-align:center;
+  text-shadow:3px 3px 0 #E6B800, 4px 4px 0 rgba(0,0,0,0.3); margin-bottom:4px; }
+.picker-sub { text-align:center; color:#fff; font-weight:900; font-size:1.1rem; margin-bottom:18px; text-shadow:1px 1px 0 rgba(0,0,0,0.3); }
+.activity-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:0 auto 22px; max-width:1000px; }
+@media(max-width:900px){ .activity-grid{ grid-template-columns:repeat(2,1fr); } }
+@media(max-width:560px){ .activity-grid{ grid-template-columns:1fr; } }
+.activity-card { background:rgba(255,255,255,0.97); border-radius:18px; padding:18px; border:4px solid #FFD700;
+  box-shadow:0 6px 0 #C49400; display:flex; flex-direction:column; gap:8px; }
+.activity-card.done { border-color:#43B047; box-shadow:0 6px 0 #2A782D; }
+.act-top { display:flex; align-items:center; gap:10px; }
+.act-icon { font-size:2rem; }
+.act-name { font-family:'Fredoka One',cursive; font-size:1.25rem; color:#E52521; line-height:1.15; }
+.act-tag { display:inline-block; font-size:0.78rem; font-weight:900; padding:3px 10px; border-radius:20px; background:#5C94FC; color:#fff; align-self:flex-start; }
+.act-tag.writing { background:#2E9AAB; } .act-tag.debate { background:#E8792E; }
+.act-desc { font-size:0.95rem; color:#555; font-weight:700; }
+.act-progress { height:10px; background:#eee; border-radius:6px; overflow:hidden; }
+.act-progress span { display:block; height:100%; background:linear-gradient(90deg,#43B047,#7ED957); }
+.act-meta { font-size:0.85rem; font-weight:900; color:#333; }
+.act-btns { display:flex; gap:8px; flex-wrap:wrap; margin-top:auto; }
+.act-btns .btn { font-size:0.95rem; padding:9px 18px; }
+.picker-footer { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+.picker-settings { background:rgba(255,255,255,0.97); border-radius:14px; padding:12px 18px; max-width:520px; margin:0 auto 18px; border:3px solid #FFD700; }
+.picker-settings label { font-weight:900; color:#E52521; display:block; margin-bottom:6px; }
+.boxes-left { text-align:center; color:#fff; font-weight:900; margin-bottom:14px; text-shadow:1px 1px 0 rgba(0,0,0,0.3); }
+
+/* Question modal extras */
+.q-counter { font-weight:900; color:#5C94FC; margin-bottom:8px; }
+.judge-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+.why-box { display:none; background:#F0FFF0; border:3px solid #43B047; border-radius:12px; padding:10px 14px;
+  font-weight:800; color:#2A782D; margin:14px 0 0; font-size:1.05rem; }
+.why-box.show { display:block; animation:fadeIn 0.3s ease; }
+.modal-tools { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
+.mini-btn { font-family:'Nunito',sans-serif; font-weight:900; font-size:0.9rem; padding:8px 16px; border-radius:20px;
+  border:2px solid #999; background:#fff; color:#555; cursor:pointer; }
+.mini-btn:hover { background:#f2f2f2; }
+.resume-note { text-align:center; margin-top:14px; font-weight:800; color:#555; }
+.big-prize { font-size:4rem; line-height:1; margin-bottom:6px; }
+</style>
+</head>
+<body>
+
+<div class="clouds">
+  <div class="cloud cloud1"></div><div class="cloud cloud2"></div>
+  <div class="cloud cloud3"></div><div class="cloud cloud4"></div>
+</div>
+<div class="ground"><div class="ground-pattern"></div></div>
+<div id="soundToggle" title="Toggle sound">🔊</div>
+
+<div id="app">
+
+  <!-- SETUP SCREEN -->
+  <div id="setupScreen">
+    <div class="setup-title">SUPER MARIO</div>
+    <div class="setup-subtitle">MYSTERY BOX • LESSON 44</div>
+    <div class="setup-box">
+      <div class="setup-section">
+        <label>Number of Teams (2–4)</label>
+        <input type="number" id="teamCount" min="2" max="4" value="2">
+      </div>
+      <div class="setup-section">
+        <label>Team Names</label>
+        <div class="team-inputs" id="teamInputs"></div>
+      </div>
+      <button class="btn btn-red btn-center" id="startBtn">&#9654; START!</button>
+      <div id="resumeWrap" class="hidden">
+        <div class="resume-note" id="resumeNote">A saved game was found.</div>
+        <button class="btn btn-green btn-center" id="resumeBtn">&#9203; CONTINUE SAVED GAME</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVITY PICKER -->
+  <div id="pickerScreen">
+    <div class="picker-title">&#127918; CHOOSE AN ACTIVITY</div>
+    <div class="picker-sub">Scores and opened boxes stay until the end of the lesson!</div>
+    <div class="scoreboard" id="pickerScoreboard"></div>
+    <div class="boxes-left" id="boxesLeft"></div>
+    <div class="picker-settings">
+      <label>Timer per Question (seconds)</label>
+      <div class="slider-row">
+        <input type="range" id="timerSlider" min="10" max="120" value="30">
+        <span class="timer-badge" id="timerBadge">30s</span>
+      </div>
+    </div>
+    <div class="activity-grid" id="activityGrid"></div>
+    <div class="picker-footer">
+      <button class="btn btn-yellow" id="finalBtn">&#127942; FINAL RESULTS</button>
+      <button class="btn btn-blue" id="resetAllBtn">&#128256; RESET SCORES &amp; BOXES</button>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="gameScreen">
+    <div class="game-header">
+      <div class="game-title" id="gameTitle">&#127873; MYSTERY BOXES</div>
+      <div class="turn-indicator" id="turnIndicator">-</div>
+    </div>
+    <div class="scoreboard" id="scoreboard"></div>
+    <div class="box-grid" id="boxGrid"></div>
+    <div class="game-footer" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn btn-yellow" id="endBtn">&#9209; END ACTIVITY</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- STEP 1: TIMER + QUESTION + TEAM SELECT -->
+<div class="overlay" id="teamSelectOverlay">
+  <div class="modal step1" style="max-width:780px;">
+    <div class="step1-box-label" id="step1BoxLabel">&#127918; New Turn!</div>
+    <div class="q-counter" id="qCounter"></div>
+    <div class="step1-subtitle" id="step1Sub">Answer the question, then click the team that got it right!</div>
+
+    <div class="big-timer-wrap"><div class="big-timer" id="bigTimer">30</div></div>
+    <div class="timer-controls">
+      <button class="tcbtn tcbtn-start" id="timerStartBtn" title="Start">&#9654;</button>
+      <button class="tcbtn tcbtn-pause" id="timerPauseBtn" title="Pause" disabled>&#9646;&#9646;</button>
+      <button class="tcbtn tcbtn-stop"  id="timerStopBtn"  title="Stop"  disabled>&#9632;</button>
+    </div>
+
+    <div class="question-text" id="questionText">Question goes here...</div>
+    <div class="answer-grid" id="answerGrid"></div>
+    <div class="why-box" id="whyBox"></div>
+
+    <div id="teamSelectSection" class="locked">
+      <div class="team-select-label">SELECT THE TEAM THAT ANSWERED CORRECTLY</div>
+      <div class="team-select-grid" id="teamSelectGrid"></div>
+    </div>
+
+    <div class="confirm-btn-wrap">
+      <button class="btn btn-green" id="confirmTeamBtn" style="opacity:0.4;pointer-events:none;transition:opacity 0.2s;">
+        &#127873; PICK A BOX!
+      </button>
+    </div>
+    <div class="modal-tools">
+      <button class="mini-btn" id="skipBtn">&#9197; Skip question</button>
+      <button class="mini-btn" id="endFromModalBtn">&#9209; End activity</button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2: KEEP / GIVE -->
+<div class="overlay" id="chanceOverlay">
+  <div class="modal centred">
+    <div class="modal-title">&#127942; NICE ANSWER!</div>
+    <div class="chance-desc" id="chanceTeamLabel">A mystery prize is inside!</div>
+    <div class="chance-sub">Keep the mystery box&hellip; or give it to another team? (It might be a ⭐… or an Oops! 🐢)</div>
+    <button class="btn btn-green" id="keepBtn" style="margin:5px">&#9989; KEEP IT</button>
+    <button class="btn btn-red"   id="giveBtn" style="margin:5px">&#127873; GIVE IT</button>
+    <div class="give-section hidden" id="giveSection">
+      <h4>Choose a team to receive the box:</h4>
+      <div class="team-buttons" id="teamButtons"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="resultOverlay">
+  <div class="result-coins" id="resultCoins"></div>
+  <div class="result-box" id="resultBox">
+    <div class="big-prize" id="rEmoji">⭐</div>
+    <div class="result-title"  id="rTitle">LUCKY!</div>
+    <div class="result-points" id="rPoints">+300 PTS</div>
+    <div class="result-msg"    id="rMsg">Great job!</div>
+  </div>
+</div>
+
+<!-- ACTIVITY COMPLETE / GAME OVER -->
+<div id="gameOver">
+  <div class="trophy" id="goTrophy">&#127942;</div>
+  <div class="winner-name" id="winnerName">TEAM MARIO WINS!</div>
+  <div class="congrats" id="goCongrats">CONGRATULATIONS!</div>
+  <div class="final-scores" id="finalScores"></div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:20px;" id="goButtons"></div>
+</div>
+
+<script>
+// ================= ACTIVITIES (Lesson 44) =================
+// type "mc": host clicks the answer a team calls out. type "judge": host clicks ✔ / ✘.
+const WORDS = [
+  { w:"obligation", d:"something you must do; a requirement" },
+  { w:"exposure", d:"contact with something" },
+  { w:"distraction", d:"something that pulls your attention away" },
+  { w:"diverse", d:"different from each other; varied" },
+  { w:"ill-equipped", d:"badly prepared; not ready" },
+  { w:"barrier", d:"something that blocks the way" },
+  { w:"put off", d:"to wait and do it later; to postpone" },
+  { w:"prioritize", d:"to put things in order of importance" },
+  { w:"retention", d:"the ability to keep or remember something" },
+  { w:"juggle", d:"to handle several tasks at the same time" },
+  { w:"insurmountable", d:"extremely difficult; nearly impossible" },
+  { w:"cram", d:"to study a lot in a short time just before a test" },
+  { w:"persuasive", d:"able to make people believe or agree with something" },
+  { w:"budget", d:"to plan how you will use your time or money" },
+  { w:"schedule", d:"a plan that shows when things will happen" },
+  { w:"expose", d:"to show clearly what is wrong or hidden" }
+];
+const GAP_OPTS = ["1 · No Proof", "2 · Broken Bridge", "3 · So What?", "⭐ Bonus · Too Big"];
+
+const ACTIVITIES = [
+  { id:"doctor", icon:"🩺", name:"Game: Problem Doctor", tag:"Writing", type:"judge",
+    desc:"Give TWO solutions for the patient's problem. Add a reason with 'because' for style!",
+    sub:"Teams type TWO solutions. Host: click ✔ when a team gives two clear solutions.",
+    questions:[
+      { q:"Patient 1: \"I always forget my homework at home.\"" },
+      { q:"Patient 2: \"I can't stop checking my phone when I study.\"" },
+      { q:"Patient 3: \"I have three tests next Friday and I haven't started.\"" },
+      { q:"Patient 4: \"My little brother plays loud games while I do homework.\"" },
+      { q:"Patient 5: \"I'm always late for school.\"" },
+      { q:"Patient 6: \"I watch TV when I should be doing my homework.\"" },
+      { q:"Patient 7: \"I always put off my projects until the night before.\"" },
+      { q:"Patient 8: \"I feel stressed because I have too many activities after school.\"" }
+    ]},
+  { id:"wordsnap", icon:"⚡", name:"Game: Word Snap", tag:"Writing", type:"mc",
+    desc:"Read the meaning. Which Words to Know word is it?",
+    sub:"Which word has this meaning? Be the first to shout it!",
+    questions: WORDS.map(x => ({ q:"Meaning: " + x.d, answer:x.w, words:true })) },
+  { id:"snapsit", icon:"💥", name:"Snap! Which word is it?", tag:"Writing", type:"mc",
+    desc:"Read the situation. Snap the right word!",
+    sub:"Which word fits this situation?",
+    questions:[
+      { q:"Homework, chores, and football practice are your ____.", answer:"obligation", why:"obligations = things you must do", words:true },
+      { q:"A wall stops you from reaching your goal.", answer:"barrier", words:true },
+      { q:"You remember the lesson a month later.", answer:"retention", words:true },
+      { q:"You do the most important task first.", answer:"prioritize", words:true },
+      { q:"Your class has students from many countries.", answer:"diverse", words:true },
+      { q:"You came to the exam without a pen or notes.", answer:"ill-equipped", words:true },
+      { q:"A notification pulls your eyes away from your book.", answer:"distraction", words:true },
+      { q:"You wait until Sunday night to start your project.", answer:"put off", why:"put off = wait and do it later", words:true }
+    ]},
+  { id:"paragraph", icon:"🚪", name:"Game: Which Paragraph?", tag:"Writing", type:"mc",
+    desc:"Essay 7.2: is the sentence from Paragraph 1, 2, or 3?",
+    sub:"Which paragraph of Essay 7.2 is this from? Prove it with a word from the essay!",
+    questions:[
+      { q:"\"Technology adds more distractions to students' lives.\"", options:["Paragraph 1","Paragraph 2","Paragraph 3"], correct:0 },
+      { q:"\"Many students wait until the last minute to study.\"", options:["Paragraph 1","Paragraph 2","Paragraph 3"], correct:1 },
+      { q:"\"TV and social media take many hours every week.\"", options:["Paragraph 1","Paragraph 2","Paragraph 3"], correct:2 },
+      { q:"\"Here the writer names both solutions.\"", options:["Paragraph 1","Paragraph 2","Paragraph 3"], correct:0 },
+      { q:"\"Do the most important tasks first.\"", options:["Paragraph 1","Paragraph 2","Paragraph 3"], correct:1 },
+      { q:"\"Save fun things for after your work is done.\"", options:["Paragraph 1","Paragraph 2","Paragraph 3"], correct:2 },
+      { q:"\"Studying a little each night is better than cramming.\"", options:["Paragraph 1","Paragraph 2","Paragraph 3"], correct:1 },
+      { q:"\"Poor time management can hurt grades, happiness, and even health.\"", options:["Paragraph 1","Paragraph 2","Paragraph 3"], correct:0 }
+    ]},
+  { id:"leak", icon:"💧", name:"Game: Spot the Leak", tag:"Debate", type:"mc",
+    desc:"Turn it (T) or Rebut it (R)? Explain in one sentence!",
+    sub:"T = the fact is true and can help our side. R = the fact is weak or false. Explain why!",
+    questions:[
+      { q:"\"Homework is bad because my best friend hates it.\"", options:["T · Turn it","R · Rebut it"], correct:1, why:"One friend is not proof!" },
+      { q:"\"Online games teach teamwork.\"", options:["T · Turn it","R · Rebut it"], correct:0, why:"True, and teamwork can help our side too." },
+      { q:"\"Students use phones every day, so phones make students smarter.\"", options:["T · Turn it","R · Rebut it"], correct:1, why:"Using something doesn't make you smarter." },
+      { q:"\"School starts early, so students are tired.\"", options:["T · Turn it","R · Rebut it"], correct:0, why:"True, and tired students can support our side." },
+      { q:"\"Video games are bad because one boy played for ten hours.\"", options:["T · Turn it","R · Rebut it"], correct:1, why:"One example is not proof for everyone!" },
+      { q:"\"Homework takes a lot of students' time.\"", options:["T · Turn it","R · Rebut it"], correct:0, why:"True, and it can help our side: students learn to plan their time." },
+      { q:"\"Everyone hates school uniforms, so they should be banned.\"", options:["T · Turn it","R · Rebut it"], correct:1, why:"Everyone? There's no proof of that." },
+      { q:"\"Students have more tests now than in the past.\"", options:["T · Turn it","R · Rebut it"], correct:0, why:"True, and we can show what this means for our side." }
+    ]},
+  { id:"cards", icon:"🕵️", name:"Breakout: Gap Detective Cards", tag:"Debate", type:"mc",
+    desc:"Read the argument card. Which gap is hiding inside?",
+    sub:"Which gap is in this argument? Ask the hunter's questions!",
+    questions:[
+      { q:"Card 1: \"Weekend homework should be banned because students hate it. Everyone I know says so.\"", options:GAP_OPTS, correct:0, why:"Friends' opinions aren't proof." },
+      { q:"Card 2: \"Social media is very popular with teenagers, so limiting it to one hour a day is a bad idea.\"", options:GAP_OPTS, correct:1, why:"Popular doesn't mean good." },
+      { q:"Card 3: \"School should start at 9:00 a.m. Many students wake up at 6:30 a.m.\"", options:GAP_OPTS, correct:2, why:"Why does waking up early matter? They never said!" },
+      { q:"Card 4: \"Projects are better than exams because projects are more fun.\"", options:GAP_OPTS, correct:1, why:"Fun doesn't mean you learn more." },
+      { q:"Card 5 (Challenge!): \"Summer vacation should be shorter. Students forget things in summer.\"", options:["1 · No Proof","2 · Broken Bridge","3 · So What?","1 + 3 · TWO gaps!"], correct:3, why:"No proof, AND no reason why it matters." },
+      { q:"Card 6 (Challenge!): \"All students study better with music.\"", options:GAP_OPTS, correct:3, why:"ALL students? Really? That's too big!" },
+      { q:"Card 7: \"Everyone knows that shorter summer vacations are better for students.\"", options:GAP_OPTS, correct:0, why:"'Everyone knows' is not proof." },
+      { q:"Card 8: \"Social media should be limited to one hour a day. Students spend six hours a week on social media.\"", options:GAP_OPTS, correct:2, why:"So what? Why are six hours a week a problem? They never said!" }
+    ]}
+];
+
+// ================= PRIZES (60 boxes) =================
+const PRIZE_SET = [
+  ...Array(20).fill({ k:"p100", emoji:"🪙", label:"+100", pts:100 }),
+  ...Array(15).fill({ k:"p200", emoji:"🍄", label:"+200", pts:200 }),
+  ...Array(10).fill({ k:"p300", emoji:"🌸", label:"+300", pts:300 }),
+  ...Array(3).fill({ k:"p500", emoji:"⭐", label:"+500", pts:500 }),
+  ...Array(7).fill({ k:"steal", emoji:"🔥", label:"Steal 100", pts:0 }),
+  ...Array(5).fill({ k:"oops", emoji:"🐢", label:"Oops −50", pts:-50 })
+];
+
+const COLORS        = ['#E52521','#43B047','#5C94FC','#FFD700'];
+const BORDER_COLORS = ['#9A1815','#2A782D','#3A5FB0','#C49400'];
+const DEF_NAMES     = ['Team Mario','Team Luigi','Team Peach','Team Toad'];
+const SAVE_KEY      = 'l44-mystery-box-v2';
+
+// ================= STATE =================
+let S = null; // { teams, boxes, progress:{actId:index}, currentTeam, timerSecs }
+let currentAct = null, currentQuestion = null, currentOptions = [];
+let selectedTeam = -1, answerConfirmed = false, activeBox = null, turnBusy = false;
+let timerInterval = null, timerRemaining = 0, timerRunning = false;
+let soundOn = true;
+
+function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch(e) {} }
+function loadSaved() { try { const r = localStorage.getItem(SAVE_KEY); return r ? JSON.parse(r) : null; } catch(e) { return null; } }
+function clearSaved() { try { localStorage.removeItem(SAVE_KEY); } catch(e) {} }
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+  return arr;
+}
+function freshBoxes() {
+  return shuffleArray(PRIZE_SET.map(p => ({ ...p }))).map((p, i) => ({ id:i, prize:p, opened:false, team:-1 }));
+}
+function freshProgress() { const o = {}; ACTIVITIES.forEach(a => o[a.id] = 0); return o; }
+
+// ================= AUDIO =================
+let audioCtx = null;
+function getAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+function playSound(type) {
+  if (!soundOn) return;
+  if (type === 'win') { playWinFanfare(); return; }
+  try {
+    const ctx = getAudio(), osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    const t = ctx.currentTime;
+    const p = {
+      coin:     () => { osc.type='sine';     osc.frequency.setValueAtTime(880,t); gain.gain.setValueAtTime(0.1,t); gain.gain.exponentialRampToValueAtTime(0.01,t+0.15); osc.start(t); osc.stop(t+0.15); },
+      open:     () => { osc.type='square';   osc.frequency.setValueAtTime(300,t); osc.frequency.setValueAtTime(400,t+0.05); osc.frequency.setValueAtTime(500,t+0.1); gain.gain.setValueAtTime(0.1,t); gain.gain.exponentialRampToValueAtTime(0.01,t+0.2); osc.start(t); osc.stop(t+0.2); },
+      correct:  () => { osc.type='square';   osc.frequency.setValueAtTime(523,t); osc.frequency.setValueAtTime(659,t+0.1); osc.frequency.setValueAtTime(784,t+0.2); gain.gain.setValueAtTime(0.1,t); gain.gain.exponentialRampToValueAtTime(0.01,t+0.4); osc.start(t); osc.stop(t+0.4); },
+      wrong:    () => { osc.type='sawtooth'; osc.frequency.setValueAtTime(200,t); osc.frequency.setValueAtTime(150,t+0.2); gain.gain.setValueAtTime(0.1,t); gain.gain.exponentialRampToValueAtTime(0.01,t+0.4); osc.start(t); osc.stop(t+0.4); }
+    };
+    if (p[type]) p[type]();
+  } catch(e) {}
+}
+function playWinFanfare() {
+  if (!soundOn) return;
+  try {
+    const ctx = getAudio();
+    [523.25, 659.25, 784.00, 1046.50, 784.00, 1046.50, 1318.51].forEach((freq, i) => {
+      const osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      const start = ctx.currentTime + i * 0.16;
+      osc.type = 'square'; osc.frequency.setValueAtTime(freq, start);
+      gain.gain.setValueAtTime(0.001, start); gain.gain.linearRampToValueAtTime(0.12, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.16);
+      osc.start(start); osc.stop(start + 0.16);
+    });
+  } catch(e) {}
+}
+
+// ================= SETUP =================
+function buildTeamInputs() {
+  const n = Math.min(4, Math.max(2, parseInt(document.getElementById('teamCount').value) || 2));
+  const div = document.getElementById('teamInputs');
+  div.innerHTML = '';
+  for (let i = 0; i < n; i++) {
+    const row = document.createElement('div');
+    row.className = 'team-input-row';
+    row.innerHTML = `<div class="team-color-dot" style="background:${COLORS[i]}"></div>
+      <input type="text" id="tname${i}" value="${DEF_NAMES[i]}" placeholder="Team ${i+1} Name">`;
+    div.appendChild(row);
+  }
+}
+function startNew() {
+  getAudio();
+  const n = Math.min(4, Math.max(2, parseInt(document.getElementById('teamCount').value) || 2));
+  const teams = [];
+  for (let i = 0; i < n; i++) {
+    const el = document.getElementById('tname' + i);
+    teams.push({ name: el ? el.value.trim() || DEF_NAMES[i] : DEF_NAMES[i], score:0, color:COLORS[i], border:BORDER_COLORS[i] });
+  }
+  S = { teams, boxes:freshBoxes(), progress:freshProgress(), currentTeam:0, timerSecs:30 };
+  save();
+  showPicker();
+}
+function resumeSaved() {
+  getAudio();
+  const saved = loadSaved();
+  if (!saved) return;
+  S = saved;
+  ACTIVITIES.forEach(a => { if (S.progress[a.id] === undefined) S.progress[a.id] = 0; });
+  showPicker();
+}
+
+// ================= SCREENS =================
+function showScreen(id) {
+  ['setupScreen','pickerScreen','gameScreen'].forEach(s => document.getElementById(s).style.display = (s === id ? (s === 'setupScreen' ? 'flex' : 'block') : 'none'));
+}
+function boxesLeft() { return S.boxes.filter(b => !b.opened).length; }
+
+function showPicker() {
+  stopAllTimers();
+  ['teamSelectOverlay','chanceOverlay'].forEach(hideOverlay); hideResult();
+  document.getElementById('gameOver').classList.remove('show');
+  currentAct = null;
+  showScreen('pickerScreen');
+  document.getElementById('timerSlider').value = S.timerSecs;
+  updateTimerBadge();
+  renderScoreboard('pickerScoreboard');
+  document.getElementById('boxesLeft').textContent = `🎁 ${boxesLeft()} of ${S.boxes.length} mystery boxes left`;
+  const grid = document.getElementById('activityGrid');
+  grid.innerHTML = ACTIVITIES.map(a => {
+    const done = S.progress[a.id], total = a.questions.length, finished = done >= total;
+    const label = finished ? '🔁 REPLAY' : (done > 0 ? '▶ CONTINUE' : '▶ PLAY');
+    return `<div class="activity-card ${finished ? 'done' : ''}">
+      <div class="act-top"><div class="act-icon">${a.icon}</div><div class="act-name">${a.name}</div></div>
+      <span class="act-tag ${a.tag.toLowerCase()}">${a.tag}</span>
+      <div class="act-desc">${a.desc}</div>
+      <div class="act-progress"><span style="width:${Math.round(100*Math.min(done,total)/total)}%"></span></div>
+      <div class="act-meta">${finished ? '✅ Completed' : `Question ${Math.min(done,total)} of ${total} played`}</div>
+      <div class="act-btns">
+        <button class="btn ${finished ? 'btn-blue' : 'btn-green'}" data-play="${a.id}">${label}</button>
+        ${done > 0 && !finished ? `<button class="btn btn-yellow" data-restart="${a.id}">↺ RESTART</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('[data-play]').forEach(b => b.addEventListener('click', () => {
+    const id = b.dataset.play;
+    if (S.progress[id] >= ACTIVITIES.find(a => a.id === id).questions.length) S.progress[id] = 0;
+    startActivity(id);
+  }));
+  grid.querySelectorAll('[data-restart]').forEach(b => b.addEventListener('click', () => { S.progress[b.dataset.restart] = 0; startActivity(b.dataset.restart); }));
+  save();
+}
+
+function startActivity(id) {
+  if (boxesLeft() === 0) { alert('All mystery boxes are open! Use "Reset scores & boxes" to play again, or see the final results.'); return; }
+  currentAct = ACTIVITIES.find(a => a.id === id);
+  showScreen('gameScreen');
+  document.getElementById('gameTitle').innerHTML = `${currentAct.icon} ${currentAct.name.toUpperCase()}`;
+  renderScoreboard('scoreboard'); renderBoxGrid(); updateTurnBadge(); lockGrid();
+  save();
+  nextQuestion();
+}
+
+function endActivity() {
+  // Keeps scores, opened boxes, and the activity's progress (an unfinished question is replayed next time)
+  stopAllTimers();
+  showPicker();
+}
+
+// ================= SCOREBOARD / GRID =================
+function renderScoreboard(elId) {
+  document.getElementById(elId).innerHTML = S.teams.map((t,i) => `
+    <div class="score-card ${i===S.currentTeam && elId==='scoreboard'?'active':''}" style="border-color:${t.border}">
+      <h3 style="color:${t.color}">${t.name}</h3>
+      <div class="pts" style="color:${t.color}">${t.score}</div>
+    </div>`).join('');
+}
+function updateTurnBadge() {
+  const t = S.teams[S.currentTeam];
+  const el = document.getElementById('turnIndicator');
+  el.innerHTML = `&#127918; <span style="color:${t.color}">${t.name}</span>'s Turn!`;
+  el.style.borderColor = t.color;
+  el.style.background  = `linear-gradient(135deg,#fff,${t.color}20)`;
+  document.querySelectorAll('#scoreboard .score-card').forEach((c,i) => c.classList.toggle('active', i===S.currentTeam));
+}
+function renderBoxGrid() {
+  const grid = document.getElementById('boxGrid');
+  grid.innerHTML = S.boxes.map((b,i) => {
+    if (!b.opened) return `<div class="game-box" id="box_${b.id}" data-box="${b.id}"><span class="box-num">${i+1}</span></div>`;
+    const t = S.teams[b.team] || { color:'#888', border:'#555', name:'' };
+    return `<div class="game-box opened claimed" title="${t.name}: ${b.prize.label}" style="background:${t.color};border-color:${t.border};box-shadow:0 3px 0 ${t.border}">
+      <span class="claim-emoji">${b.prize.emoji}</span><span class="claim-label">${b.prize.label}</span></div>`;
+  }).join('');
+  grid.querySelectorAll('.game-box:not(.opened)').forEach(el => el.addEventListener('click', () => clickBox(parseInt(el.dataset.box))));
+}
+function lockGrid()   { document.querySelectorAll('.game-box:not(.opened)').forEach(el => el.style.pointerEvents = 'none'); }
+function unlockGrid() { document.querySelectorAll('.game-box:not(.opened)').forEach(el => el.style.pointerEvents = 'auto'); }
+
+// ================= QUESTIONS =================
+function buildOptions(q) {
+  if (q.options) return { opts:q.options, correct:q.correct };
+  if (q.words) {
+    const others = shuffleArray(WORDS.map(x => x.w).filter(w => w !== q.answer)).slice(0, 3);
+    const opts = shuffleArray([q.answer, ...others]);
+    return { opts, correct: opts.indexOf(q.answer) };
+  }
+  return { opts:[], correct:-1 };
+}
+
+function nextQuestion() {
+  turnBusy = false;
+  if (boxesLeft() === 0) { showFinal(true); return; }
+  const idx = S.progress[currentAct.id];
+  if (idx >= currentAct.questions.length) { activityComplete(); return; }
+  currentQuestion = currentAct.questions[idx];
+  selectedTeam = -1; answerConfirmed = false;
+
+  document.getElementById('step1BoxLabel').textContent = `${currentAct.icon} ${S.teams[S.currentTeam].name}'s Turn!`;
+  document.getElementById('qCounter').textContent = `${currentAct.name} • Question ${idx+1} of ${currentAct.questions.length}`;
+  document.getElementById('step1Sub').textContent = currentAct.sub;
+  document.getElementById('questionText').textContent = currentQuestion.q;
+  const why = document.getElementById('whyBox'); why.classList.remove('show'); why.textContent = '';
+
+  const agrid = document.getElementById('answerGrid');
+  if (currentAct.type === 'judge') {
+    agrid.className = 'judge-btns';
+    agrid.innerHTML = `<button class="btn btn-green" id="judgeYes">✔ CORRECT!</button>
+                       <button class="btn btn-red" id="judgeNo">✘ TRY AGAIN</button>`;
+    document.getElementById('judgeYes').addEventListener('click', judgeCorrect);
+    document.getElementById('judgeNo').addEventListener('click', () => playSound('wrong'));
+  } else {
+    agrid.className = 'answer-grid';
+    const built = buildOptions(currentQuestion);
+    currentOptions = built.opts; currentQuestion._correct = built.correct;
+    agrid.innerHTML = built.opts.map((opt, i) => `<button class="answer-btn" data-i="${i}">${opt}</button>`).join('');
+    agrid.querySelectorAll('.answer-btn').forEach(btn => btn.addEventListener('click', () => handleAnswerClick(parseInt(btn.dataset.i))));
+  }
+
+  document.getElementById('teamSelectSection').classList.add('locked');
+  const grid = document.getElementById('teamSelectGrid');
+  grid.innerHTML = S.teams.map((t,i) => `
+    <button class="team-select-btn" data-i="${i}" style="border-color:${t.border};color:${t.color}">
+      <div class="team-dot" style="background:${t.color}"></div>${t.name}</button>`).join('');
+  grid.querySelectorAll('.team-select-btn').forEach(btn => btn.addEventListener('click', () => pickTeam(parseInt(btn.dataset.i))));
+  const cb = document.getElementById('confirmTeamBtn'); cb.style.opacity = '0.4'; cb.style.pointerEvents = 'none';
+
+  showOverlay('teamSelectOverlay');
+  startStep1Timer();
+}
+
+function showWhy() {
+  if (!currentQuestion.why) return;
+  const w = document.getElementById('whyBox'); w.textContent = '💡 ' + currentQuestion.why; w.classList.add('show');
+}
+function unlockTeams() { document.getElementById('teamSelectSection').classList.remove('locked'); }
+
+function judgeCorrect() {
+  if (answerConfirmed) return;
+  answerConfirmed = true;
+  playSound('correct');
+  document.getElementById('judgeNo').disabled = true;
+  document.getElementById('judgeYes').style.opacity = '0.6';
+  unlockTeams();
+}
+function handleAnswerClick(idx) {
+  if (answerConfirmed) return;
+  const buttons = document.querySelectorAll('#answerGrid .answer-btn');
+  if (idx === currentQuestion._correct) {
+    answerConfirmed = true;
+    buttons[idx].classList.add('correct-flash');
+    buttons.forEach((b,i) => { if (i !== idx) b.disabled = true; });
+    playSound('correct'); showWhy(); unlockTeams();
+  } else {
+    const btn = buttons[idx];
+    btn.classList.add('wrong-flash'); playSound('wrong');
+    setTimeout(() => btn.classList.remove('wrong-flash'), 500);
+  }
+}
+function pickTeam(idx) {
+  if (!answerConfirmed) return;
+  selectedTeam = idx;
+  document.querySelectorAll('.team-select-btn').forEach((btn, i) => {
+    btn.classList.toggle('selected', i === idx);
+    btn.style.background = i === idx ? S.teams[i].color : '#fff';
+  });
+  const cb = document.getElementById('confirmTeamBtn'); cb.style.opacity = '1'; cb.style.pointerEvents = 'auto';
+}
+
+// ================= TIMER =================
+function setTimerBtns(running, stopped) {
+  document.getElementById('timerStartBtn').disabled = running || (!stopped && timerRemaining <= 0) || stopped;
+  document.getElementById('timerPauseBtn').disabled = !running;
+  document.getElementById('timerStopBtn').disabled  = stopped || (!running && timerRemaining === S.timerSecs);
+}
+function startStep1Timer() {
+  clearInterval(timerInterval);
+  timerRemaining = S.timerSecs; timerRunning = false;
+  const disp = document.getElementById('bigTimer');
+  disp.textContent = timerRemaining; disp.classList.remove('urgent');
+  resumeTimer();
+}
+function resumeTimer() {
+  clearInterval(timerInterval);
+  timerRunning = true; setTimerBtns(true, false);
+  const disp = document.getElementById('bigTimer');
+  timerInterval = setInterval(() => {
+    timerRemaining--; disp.textContent = timerRemaining;
+    if (timerRemaining <= 5) disp.classList.add('urgent');
+    if (timerRemaining <= 0) { clearInterval(timerInterval); timerRunning = false; setTimerBtns(false, true); step1TimeUp(); }
+  }, 1000);
+}
+function pauseTimer() {
+  clearInterval(timerInterval); timerRunning = false;
+  document.getElementById('bigTimer').classList.remove('urgent'); setTimerBtns(false, false);
+}
+function stopTimer() {
+  clearInterval(timerInterval); timerRunning = false; timerRemaining = 0;
+  const disp = document.getElementById('bigTimer'); disp.textContent = '—'; disp.classList.remove('urgent');
+  setTimerBtns(false, true);
+}
+function stopAllTimers() { clearInterval(timerInterval); timerRunning = false; }
+
+function step1TimeUp() {
+  if (!answerConfirmed) {
+    if (currentAct.type === 'mc') {
+      const buttons = document.querySelectorAll('#answerGrid .answer-btn');
+      buttons.forEach(b => b.disabled = true);
+      if (buttons[currentQuestion._correct]) buttons[currentQuestion._correct].classList.add('correct-flash');
+      showWhy();
+    }
+    playSound('wrong');
+    setTimeout(() => { hideOverlay('teamSelectOverlay'); finishQuestion(); }, 2200);
+    return;
+  }
+  if (selectedTeam === -1) pickTeam(S.currentTeam);
+  confirmTeamAndOpenBox();
+}
+function skipQuestion() {
+  stopAllTimers(); hideOverlay('teamSelectOverlay'); finishQuestion();
+}
+function confirmTeamAndOpenBox() {
+  stopAllTimers();
+  if (selectedTeam === -1) return;
+  S.currentTeam = selectedTeam;
+  hideOverlay('teamSelectOverlay');
+  updateTurnBadge(); unlockGrid();
+}
+
+// ================= BOXES & PRIZES =================
+function clickBox(id) {
+  if (turnBusy) return;
+  const b = S.boxes.find(x => x.id === id);
+  if (!b || b.opened) return;
+  turnBusy = true; activeBox = id;
+  playSound('open');
+  const el = document.getElementById('box_' + id);
+  el.classList.add('box-bouncing'); lockGrid();
+  setTimeout(() => { el.classList.remove('box-bouncing'); showChanceModal(); }, 500);
+}
+function showChanceModal() {
+  document.getElementById('giveSection').classList.add('hidden');
+  document.getElementById('chanceTeamLabel').textContent = S.teams[S.currentTeam].name + ' got it right!';
+  showOverlay('chanceOverlay');
+}
+function showGiveOptions() {
+  const btns = document.getElementById('teamButtons');
+  btns.innerHTML = S.teams.map((t,i) => i===S.currentTeam ? '' :
+    `<button class="team-pick-btn" data-i="${i}" style="border-color:${t.border};color:${t.color}">${t.name}</button>`).join('');
+  btns.querySelectorAll('.team-pick-btn').forEach(btn => btn.addEventListener('click', () => awardBox(parseInt(btn.dataset.i), true)));
+  document.getElementById('giveSection').classList.remove('hidden');
+}
+function awardBox(teamIdx, gifted) {
+  hideOverlay('chanceOverlay');
+  const b = S.boxes.find(x => x.id === activeBox);
+  const p = b.prize, team = S.teams[teamIdx];
+  const giver = S.teams[S.currentTeam].name;
+  let title, pts, msg, color = '#43B047', coins = true;
+
+  if (p.k === 'steal') {
+    const others = S.teams.map((t,i) => ({ t, i })).filter(x => x.i !== teamIdx).sort((a,b) => b.t.score - a.t.score);
+    const target = others[0];
+    const amt = target ? Math.min(100, target.t.score) : 0;
+    if (target) { target.t.score -= amt; team.score += amt; }
+    title = '🔥 STEAL!'; pts = amt > 0 ? `+${amt} PTS` : '+0 PTS';
+    msg = amt > 0 ? `${team.name} stole ${amt} points from ${target.t.name}!` : `Nothing to steal yet!`;
+    color = '#FF6B35';
+  } else if (p.k === 'oops') {
+    const loss = Math.min(50, team.score);
+    team.score -= loss;
+    title = '🐢 OOPS!'; pts = `−${loss} PTS`; msg = `${team.name} lost ${loss} points!`; color = '#E52521'; coins = false;
+    playSound('wrong');
+  } else {
+    team.score += p.pts;
+    title = p.k === 'p500' ? '⭐ SUPER STAR!' : '🎉 CORRECT!';
+    pts = `+${p.pts} PTS`;
+    msg = `${team.name} got the points!`;
+  }
+  if (gifted) msg = `${giver} gave the box to ${team.name}! ` + msg;
+  if (p.k !== 'oops') playSound('coin');
+
+  b.opened = true; b.team = teamIdx; activeBox = null;
+  renderScoreboard('scoreboard'); renderBoxGrid(); updateTurnBadge(); lockGrid();
+  save();
+  showResult(p.emoji, title, pts, msg, color, coins);
+  setTimeout(() => { hideResult(); finishQuestion(); }, 2800);
+}
+
+// ================= FLOW =================
+function finishQuestion() {
+  S.progress[currentAct.id] += 1;
+  S.currentTeam = (S.currentTeam + 1) % S.teams.length;
+  updateTurnBadge(); save();
+  nextQuestion();
+}
+function activityComplete() {
+  stopAllTimers();
+  showFinal(false);
+}
+
+// ================= RESULT / FINAL =================
+function showResult(emoji, title, pts, msg, color, coins) {
+  document.getElementById('rEmoji').textContent  = emoji;
+  document.getElementById('rTitle').textContent  = title;
+  document.getElementById('rTitle').style.color  = color;
+  document.getElementById('rPoints').textContent = pts;
+  document.getElementById('rPoints').style.color = color;
+  document.getElementById('rMsg').textContent    = msg;
+  document.getElementById('resultBox').style.borderColor = color;
+  if (coins) spawnCoins();
+  document.getElementById('resultOverlay').classList.add('show');
+}
+function hideResult() {
+  document.getElementById('resultOverlay').classList.remove('show');
+  document.getElementById('resultCoins').innerHTML = '';
+}
+function spawnCoins() {
+  const c = document.getElementById('resultCoins'); c.innerHTML = '';
+  for (let i=0; i<15; i++) {
+    const el = document.createElement('div');
+    el.className = 'coin'; el.textContent = '⭐';
+    el.style.left = Math.random()*100+'%';
+    el.style.animationDelay = Math.random()+'s';
+    el.style.animationDuration = (1.5+Math.random())+'s';
+    c.appendChild(el);
+  }
+}
+
+// isFinal=false → "activity complete" summary; true → final winner screen
+function showFinal(isFinal) {
+  stopAllTimers();
+  ['teamSelectOverlay','chanceOverlay'].forEach(hideOverlay); hideResult();
+  const max = Math.max(...S.teams.map(t=>t.score));
+  const leaders = S.teams.filter(t=>t.score===max);
+  const nameEl = document.getElementById('winnerName');
+  if (isFinal) {
+    document.getElementById('goTrophy').textContent = '🏆';
+    nameEl.textContent = leaders.length===1 ? leaders[0].name+' WINS!' : "IT'S A TIE!";
+    document.getElementById('goCongrats').textContent = boxesLeft() === 0 ? 'ALL BOXES OPENED! CONGRATULATIONS!' : 'CONGRATULATIONS!';
+  } else {
+    document.getElementById('goTrophy').textContent = currentAct ? currentAct.icon : '🎉';
+    nameEl.textContent = (currentAct ? currentAct.name : 'Activity') + ' — DONE!';
+    document.getElementById('goCongrats').textContent = leaders.length===1 ? `${leaders[0].name} is in the lead!` : 'It\'s a tie at the top!';
+  }
+  nameEl.style.color = isFinal && leaders.length===1 ? leaders[0].color : '#FFD700';
+  const sorted = [...S.teams].sort((a,b)=>b.score-a.score);
+  const medals = ['🥇','🥈','🥉','4️⃣'];
+  document.getElementById('finalScores').innerHTML = sorted.map((t,i) => `
+    <div class="final-card ${t.score===max?'winner':''}" style="border-color:${t.border}">
+      <div class="medal">${medals[i]}</div>
+      <div class="fname" style="color:${t.color}">${t.name}</div>
+      <div class="fscore" style="color:${t.color}">${t.score}</div>
+    </div>`).join('');
+  const bw = document.getElementById('goButtons');
+  bw.innerHTML = isFinal
+    ? `<button class="btn btn-yellow" id="goBack">⬅ BACK TO ACTIVITIES</button>
+       <button class="btn btn-red" id="goNew">🆕 NEW GAME (NEW TEAMS)</button>`
+    : `<button class="btn btn-green" id="goBack">▶ NEXT ACTIVITY</button>
+       <button class="btn btn-yellow" id="goFinal">🏆 FINAL RESULTS</button>`;
+  document.getElementById('goBack').addEventListener('click', showPicker);
+  const gn = document.getElementById('goNew'); if (gn) gn.addEventListener('click', newGame);
+  const gf = document.getElementById('goFinal'); if (gf) gf.addEventListener('click', () => showFinal(true));
+  if (isFinal) { spawnConfetti(); playSound('win'); } else { playSound('correct'); }
+  document.getElementById('gameOver').classList.add('show');
+}
+function spawnConfetti() {
+  const cols = ['#E52521','#43B047','#5C94FC','#FFD700','#FF6B35','#9C27B0'];
+  for (let i=0; i<50; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random()*100+'%';
+    el.style.background = cols[Math.floor(Math.random()*cols.length)];
+    el.style.animationDelay = Math.random()*2+'s';
+    el.style.borderRadius = Math.random()>0.5 ? '50%' : '2px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3200);
+  }
+}
+
+// ================= RESETS =================
+function resetScoresAndBoxes() {
+  if (!confirm('Reset ALL scores and mystery boxes? Activity progress will also go back to the start. Team names stay the same.')) return;
+  S.teams.forEach(t => t.score = 0);
+  S.boxes = freshBoxes(); S.progress = freshProgress(); S.currentTeam = 0;
+  save(); showPicker();
+}
+function newGame() {
+  if (!confirm('Start a new game with new teams? All scores and boxes will be cleared.')) return;
+  clearSaved(); S = null;
+  document.getElementById('gameOver').classList.remove('show');
+  showScreen('setupScreen'); checkResume();
+}
+
+function showOverlay(id) { document.getElementById(id).classList.add('show'); }
+function hideOverlay(id) { document.getElementById(id).classList.remove('show'); }
+function updateTimerBadge() {
+  const v = parseInt(document.getElementById('timerSlider').value) || 30;
+  document.getElementById('timerBadge').textContent = v + 's';
+  if (S) { S.timerSecs = v; save(); }
+}
+function checkResume() {
+  const saved = loadSaved();
+  const wrap = document.getElementById('resumeWrap');
+  if (saved && saved.teams) {
+    const total = saved.teams.reduce((a,t)=>a+t.score,0);
+    document.getElementById('resumeNote').textContent =
+      `Saved game: ${saved.teams.map(t=>t.name+' '+t.score).join(' • ')} (${saved.boxes.filter(b=>!b.opened).length} boxes left)`;
+    wrap.classList.remove('hidden');
+  } else wrap.classList.add('hidden');
+}
+
+// ================= WIRING =================
+document.getElementById('soundToggle').addEventListener('click', function() {
+  soundOn = !soundOn; this.textContent = soundOn ? '🔊' : '🔇';
+});
+document.getElementById('teamCount').addEventListener('change', buildTeamInputs);
+document.getElementById('timerSlider').addEventListener('input', updateTimerBadge);
+document.getElementById('startBtn').addEventListener('click', () => {
+  if (loadSaved() && !confirm('Start a NEW game? The saved game will be replaced.')) return;
+  startNew();
+});
+document.getElementById('resumeBtn').addEventListener('click', resumeSaved);
+document.getElementById('endBtn').addEventListener('click', endActivity);
+document.getElementById('endFromModalBtn').addEventListener('click', endActivity);
+document.getElementById('skipBtn').addEventListener('click', skipQuestion);
+document.getElementById('finalBtn').addEventListener('click', () => showFinal(true));
+document.getElementById('resetAllBtn').addEventListener('click', resetScoresAndBoxes);
+document.getElementById('confirmTeamBtn').addEventListener('click', confirmTeamAndOpenBox);
+document.getElementById('timerStartBtn').addEventListener('click', resumeTimer);
+document.getElementById('timerPauseBtn').addEventListener('click', pauseTimer);
+document.getElementById('timerStopBtn').addEventListener('click', stopTimer);
+document.getElementById('keepBtn').addEventListener('click', () => awardBox(S.currentTeam, false));
+document.getElementById('giveBtn').addEventListener('click', showGiveOptions);
+
+buildTeamInputs();
+checkResume();
+</script>
+</body>
+</html>
